@@ -18,8 +18,11 @@ class POCVAR():
         self.display_video = display_video
         self.save_video = save_video
 
-        #if self.save_video is True:
-            #self.video_edit = np.array()
+        if self.save_video is True:
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            x, y = get_original_dimentions(self.video)
+            new_video_path = video.replace(".mp4", "_augmented.avi")
+            self.video_edit = cv2.VideoWriter(new_video_path, fourcc, 30.0, (x , y))
 
     def augment_video(self):
         try:
@@ -27,7 +30,6 @@ class POCVAR():
             while self.video.isOpened():
                 success, frame = self.video.read()
                 if not success:
-                    print("Can't read video...")
                     break
                 total_frames += 1
                 print(f"Processing frame {total_frames}...")
@@ -52,12 +54,23 @@ class POCVAR():
                     cv2.fillConvexPoly(im_dst, pts_dst.astype(int), 0, 16)
                     im_dst = im_dst + temp
                     if self.display_video: cv2.imshow("Display", im_dst)
+                    if self.save_video: self.video_edit.write(im_dst)
                 else:
                     display = frame
                     if self.display_video: cv2.imshow("Display", display)
+                    if self.save_video: self.video_edit.write(display)
                 if self.display_video: cv2.waitKey()
+            print("Finishing...")
+            self.video.release()
+            self.video_edit.release()
+            cv2.destroyAllWindows()
         except Exception as error:
             print(f"An error occured: {error}")
+
+def get_original_dimentions(video):
+    success, frame = video.read()
+    if success:
+        return frame.shape[1], frame.shape[0]
     
 def read_markers(marker_path):
     try:
